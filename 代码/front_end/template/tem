@@ -1,0 +1,42 @@
+@app.route('/schema_show', methods=['GET', 'POST'])
+def schema_show():
+    schema=fetch_global_RE_schema()
+    relation=fetch_global_RE_schema()
+    return render_template("schema_show.html",re_list=schema,re_list=relation)
+
+@app.route('/RE_delete_type', methods=['GET', 'POST'])
+def RE_delete_one_type():
+    type=request.args.get("type")
+    re_list=fetch_global_RE_schema()
+    del re_list[type]
+    save_global_RE_schema(re_list)
+    return type
+
+@app.route('/RE_add_type', methods=['GET', 'POST'])
+def RE_add_one_type():
+    type=request.args.get("type")
+    entity=request.args.get("entity")
+    re_list=fetch_global_RE_schema()
+    if re_list.get(type)==None:
+        re_list[type]=[entity]
+    save_global_RE_schema(re_list)
+    
+    return type+" "+entity
+
+@app.route('/RE_delete_entity', methods=['GET', 'POST'])
+def RE_delete_one_entity():
+    key=request.args.get("key")
+    value=request.args.get("value")
+    re_list=fetch_global_RE_schema()
+    del re_list[key][re_list[key].index(value)]
+    save_global_RE_schema(re_list)
+    return key+"  "+value
+
+@app.route('/RE_add_entity', methods=['GET', 'POST'])
+def RE_add_one_entity():
+    key=request.args.get("key")
+    value=request.args.get("value")
+    re_list=fetch_global_RE_schema()
+    re_list[key].append(value)
+    save_global_RE_schema(re_list)
+    return key+"  "+value

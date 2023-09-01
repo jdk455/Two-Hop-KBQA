@@ -1,0 +1,169 @@
+{% extends "base.html" %}  
+  
+
+ 
+ 
+{% block page_content %}  
+
+ 
+
+         <style  type="text/css">
+            body {
+                /* 设置渐变的方向和颜色 */
+                 background: linear-gradient(to right, rgb(235, 235, 25),  rgb(40, 148, 248));
+                /* 创建从左到右的彩虹渐变 */
+            }
+            #viz {
+                width: 900px;
+                height: 700px;
+                border: 1px solid lightgray;
+                font: 22pt arial;
+            }
+            .toast {
+                display: none;
+                position: fixed;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width: 18rem;
+                height: 18rem;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                background-color: rgba(0,0,0,0.2);
+                border-radius: 1rem;
+                color: #f0f0f0;
+                font-size: 2.5rem;
+            }
+         
+            .load {
+                display: inline-block;
+                margin-bottom: 1.5rem;
+                height: 4rem;
+                width: 4rem;
+                border: 0.4rem solid transparent;
+                border-top-color: white;
+                border-left-color: white;
+                border-bottom-color: white;
+                animation: circle 1s infinite linear;
+                -webkit-animation: circle 1s infinite linear; /* Safari 和 Chrome */
+                border-radius: 50%
+            }
+         
+            @-webkit-keyframes circle {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(-360deg)
+                }
+            }
+        </style>
+
+ <!-- 查询图 -->
+ <script type="text/javascript" src="../dist/neovis.js"></script>
+ <script
+         src="https://code.jquery.com/jquery-3.2.1.min.js"
+         integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+         crossorigin="anonymous"></script>
+
+ <script type="text/javascript">
+     // define config car
+     // instantiate nodevis object
+     // draw
+
+     var viz;
+
+     function draw() {
+        var toast = document.getElementById("toast");
+        toast.style.display = "flex";
+        var config = {
+             containerId: "viz",
+             neo4j: {
+                 serverUrl: "neo4j://localhost:7687",
+                 serverUser: "neo4j",
+                 serverPassword: "neo4jkyrie"
+             },
+             labels: {
+                 Character: {
+                     label: "name",
+                     value: "pagerank",
+                     group: "community"
+                 }
+             },
+             relationships: {
+                 INTERACTS: {
+                     value: "weight"
+                 }
+             },
+             initialCypher: "MATCH (n)-[r:INTERACTS]->(m) RETURN n,r,m limit 10"
+         };
+         $.ajax({
+            type: 'GET',
+            url: '../create',
+            success: function(res){
+                alert(res)
+                console.log(res)
+            },
+            error: function(){
+                consle.log('error')
+            }
+        })
+
+         viz = new NeoVis.default(config);
+         viz = new NeoVis.default(config);
+         viz.render();
+         console.log(viz);
+
+     }
+ </script>
+ <!-- 查询图完毕 -->
+     
+ <!-- ajax请求示例 -->
+<script>
+        function getTest(){
+            $.ajax({
+                type: 'GET',
+                url: '../create',
+                success: function(res){
+                    alert(res)
+                    console.log(res)
+                },
+                error: function(){
+                    consle.log('error')
+                }
+            })	
+        }
+</script>
+<!-- ajax请求示例结束 -->
+
+<!-- 跳转新页面 -->
+<!-- <script>
+    function navigateTo(url="/") {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.open();
+                document.write(this.responseText);
+                document.close();
+            }
+        };
+        xhttp.open("GET", url, true);
+        xhttp.send();
+    }
+</script> -->
+<!-- 跳转新页面完毕 -->
+
+
+<div class="toast" id="toast">
+    <span class="load"></span>
+    <span>检测中...</span>
+</div>
+
+<textarea id="editor" style="width:100%;height:100px;" placeholder="自然语言"></textarea>
+<button onclick="draw()">创建</button>
+<textarea id="editor" style="width:100%;height:100px;" placeholder="cypher语句" disabled></textarea>
+<div id="viz"></div>
+
+
+{% endblock %}

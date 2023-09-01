@@ -1,0 +1,52 @@
+{% extends "base.html" %}  
+{% block title %}ChatCorn{% endblock %}  
+ 
+<!-- <script type="text/javascript" src="https://unpkg.com/wangeditor/dist/wangEditor.min.js"></script> -->
+
+{% block page_content %}  
+
+
+
+<div class="page-header">  
+    <center>
+    <h1>知识图谱问答系统对比实验</h1>
+    <h1>Seq2Seq模型，基于NER,RE的三元组提取模型</h1>
+    <h3>按学号排序</h3>
+    <h3>蔡嘉骏&emsp;&emsp;2020212287 </h3>
+    <h3>陈东升&emsp;&emsp;2020212288</h3>
+    <h3>李沅昕&emsp;&emsp;2020212295</h3>
+</center>
+
+    <h4>
+        这里是关于基于NER和RE的Wikipedia知识图谱问答系统(KBQA)的简介:
+
+        <br>&nbsp;&nbsp; 这是一个可以自动回答自然语言问题的系统。它利用命名实体识别(NER)来识别输入问题中的实体,如人名、地名和机构名。 然后,它使用关系提取(RE)来确定实体之间的关系。 系统使用这些实体和关系来构造SPARQL查询,以在Wikipedia的知识图谱中搜索答案。
+
+        <br>&nbsp;&nbsp; 比如,对于问题“冯诺依曼什么时候发明计算机”,系统会:
+
+        <br>&nbsp;&nbsp; 1.使用NER识别"冯诺依曼"和"计算机"作为实体。
+
+        <br>&nbsp;&nbsp; 2.使用RE提取"冯诺依曼"和"计算机"之间的"发明"关系。
+
+        <br>&nbsp;&nbsp; 3.构造如下的SPARQL查询:
+
+        <pre>
+            SELECT ?date 
+            WHERE {
+              <wd:Q364028> wdt:P170  <wd:Q8447>.  
+                 # 冯诺依曼发明了计算机
+              <wd:Q8447> wdt:P571 ?date.           
+                 # 获取计算机的创始日期 
+            }  
+            </pre>
+<br>&nbsp;&nbsp; 4.运行SPARQL查询,从知识图谱获取结果日期。
+
+<br>&nbsp;&nbsp; 5.返回该日期作为问题的答案。
+
+<br>&nbsp;&nbsp; 6.所以,通过使用NER和RE技术构造针对知识图谱的SPARQL查询,该系统可以自动理解输入问题并在知识图谱中搜索并返回答案。这是一个很有潜力的人工智能技术,可以应用于各种知识图谱和领域。
+
+    </h3>
+
+
+</div>  
+{% endblock %}

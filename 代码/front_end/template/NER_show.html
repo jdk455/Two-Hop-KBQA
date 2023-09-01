@@ -1,0 +1,413 @@
+{% extends "base.html" %} {% block title %}ChatCorn-NER{% endblock %} {% block
+page_content %}
+
+<style type="text/css">
+  /*body {
+                 设置渐变的方向和颜色 
+                 background: linear-gradient(to right, rgb(235, 235, 25),  rgb(40, 148, 248));
+                 创建从左到右的彩虹渐变 
+            } */
+  /* Style the select element */
+  .button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    color: #fff;
+    background-color: #0077cc;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .button:hover {
+    background-color: #005fa3;
+  }
+
+  .button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.4);
+  }
+
+  select {
+    width: 200px;
+    height: 30px;
+    padding: 5px 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Style the options inside the select element */
+  select option {
+    font-size: 16px;
+    padding: 5px 10px;
+  }
+
+  /* Style the selected option */
+  select option:checked {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    text-align: center;
+    border: 1px solid black;
+    padding: 8px;
+  }
+
+  #viz {
+    width: 900px;
+    height: 700px;
+    border: 1px solid lightgray;
+    font: 22pt arial;
+  }
+
+  .toast {
+    display: none;
+    position: fixed;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 36rem;
+    height: 18rem;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 1rem;
+    color: #f0f0f0;
+    font-size: 2.5rem;
+  }
+
+  .load {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    height: 4rem;
+    width: 4rem;
+    border: 0.4rem solid transparent;
+    border-top-color: white;
+    border-left-color: white;
+    border-bottom-color: white;
+    animation: circle 1s infinite linear;
+    -webkit-animation: circle 1s infinite linear;
+    /* Safari 和 Chrome */
+    border-radius: 50%;
+  }
+
+  @-webkit-keyframes circle {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(-360deg);
+    }
+  }
+</style>
+
+<!-- 查询图 ../dist/neovis.js-->
+<!-- <script type="text/javascript" src="neovis.js"></script> -->
+<script src="neovis.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+  // define config car
+  // instantiate nodevis object
+  // draw
+
+  var viz;
+
+  function draw() {
+    var toast = document.getElementById("toast");
+    var toast_text = document.getElementById("toast_text");
+    var origin_style_display = toast.style.display;
+    toast.style.display = "flex";
+    toast_text.innerHTML = "Extracting schema...";
+    var event_list;
+    var mySelector = document.getElementById("sid");
+    var schema = mySelector.options[mySelector.selectedIndex].text;
+    var disease;
+    var modelSelector = document.getElementById("model_choose");
+    var model = modelSelector.options[modelSelector.selectedIndex].text;
+    if (model == "ChatGPT") {
+      alert("ChatGPT");
+      //请求stage1
+      $.ajax({
+        type: "GET",
+        url: "../NER_stage1",
+        contentType: "application/json;charset=utf-8",
+        data: {
+          rawtext: $("#editor").val(),
+          schema: schema,
+        },
+        //stage1_success
+        success: function (res) {
+          $("#entity_text").text(res[0]);
+          event_list = res[1];
+          $("#toast_text").text("Extracting type and entity...");
+          //stage2
+          $.ajax({
+            type: "GET",
+            url: "../NER_stage2",
+            responseType: "json",
+            contentType: "application/json;charset=utf-8",
+            data: {
+              event_list: event_list,
+              rawtext: $("#editor").val(),
+              schema: schema,
+            },
+            //stage2_success
+            success: function (res) {
+              $("#property_text").text(res[0]);
+              try {
+                // Try to parse the JSON string
+                var jsonObj = JSON.parse(res[0]);
+                // Access the properties of the object
+                console.log(jsonObj.Disease);
+                alert(jsonObj.Disease); // Output: John
+              } catch (e) {
+                // Handle the error
+                console.log("Error parsing JSON string:", e.message);
+              }
+              $("#toast_text").text("Constructing Graph...");
+              disease = res[1];
+              //构建图
+              $.ajax({
+                type: "GET",
+                url: "../NER_build_graph",
+                data: {
+                  entity_extraction: res[2],
+                },
+                success: function (res) {
+
+                  //alert(res)
+                  console.log(res);
+                  alert(res);
+
+                  var config = {
+                    containerId: "viz",
+                    neo4j: {
+                      serverUrl: "neo4j://localhost:7687",
+                      serverUser: "neo4j",
+                      serverPassword: "neo4jkyrie",
+                    },
+                    labels: {
+                      /*"*": {
+                          label: "name",
+                          value: "pagerank",
+                          group: "community",
+                      }*/
+
+                      Disease: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+
+                      },
+
+                      Pesticide: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+                      },
+                      Check: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+                      },
+                      Classification: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+                      },
+                      Expert: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+                      },
+                      Symptom: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+                      },
+                      Gov_subsidies: {
+                        label: "name",
+                        value: "pagerank",
+                        group: "community",
+                      },
+                    },
+
+                    relationships: {
+                      recommand_expert: {
+                        //"caption": false,
+                        thickness: "weight",
+                        color: "rating",
+                      },
+                      recommand_pesticide: {
+                        //"caption": false,
+                        thickness: "weight",
+                        color: "rating",
+                      },
+                      has_subsidies: {
+                        //"caption": false,
+                        thickness: "weight",
+                        color: "rating",
+                      },
+                      disease_classification: {
+                        //"caption": false,
+                        thickness: "weight",
+                        color: "rating",
+                      },
+                      has_symptom: {
+                        //"caption": false,
+                        thickness: "weight",
+                        color: "rating",
+                      },
+                      need_check: {
+                        //"caption": false,
+                        thickness: "weight",
+                        color: "rating",
+                      },
+                    },
+                    //initialCypher: "MATCH (n:Disease) WHERE n.name='"+disease+"' RETURN n limit 10"
+                    //initialCypher: "MATCH (n:Disease)-[r]->(m) WHERE n.name='"+disease+"' RETURN n,r,m limit 10"
+                    //initialCypher: "MATCH (n:Disease)-[r]->(m) RETURN n,r,m limit 10"
+                    initialCypher: res,
+                  };
+                  viz = new NeoVis.default(config);
+                  viz.render();
+                  toast.style.display = origin_style_display;
+                  alert("图构建完成");
+                },
+                error: function () {
+                  consle.log("error");
+                },
+              });
+            },
+            error: function () {
+              consle.log("error");
+            },
+          });
+          console.log(res);
+        },
+        error: function () {
+          consle.log("error");
+        },
+      });
+    }
+    else if (model == "BertBased") {
+      alert("BertBased")
+      $.ajax({
+        type: "GET",
+        url: "../NER_BertBased",
+        contentType: "application/json;charset=utf-8",
+        data: {
+          rawtext: $("#editor").val(),
+        },
+        //stage1_success
+        success: function (res) {
+          for (var i = 0; i < res.length; i++) {
+            $("#entity_text").append(res[i]["entity"]+" : "+res[i]["word"] +" || "+res[i]["uri"]+ "\n");
+          }
+          toast.style.display = origin_style_display;
+        }
+      });
+
+    }
+
+    //viz = new NeoVis.default(config);
+    //viz = new NeoVis.default(config);
+    //viz.render();
+    console.log(viz);
+  }
+  function selectcity() {
+    var mySelector = document.getElementById("sid");
+    var key_text = mySelector.options[mySelector.selectedIndex].text;
+
+    var key_div = document.getElementById(key_text + "_div");
+
+    var display_div = document.getElementById("key_display");
+
+    const childDivs = display_div.querySelectorAll("div");
+    for (var i = 0; i < childDivs.length; i++) {
+      childDivs[i].style.display = "none"; // set the display property of each child div element to "none"
+    }
+    key_div.style.display = "block";
+  }
+
+</script>
+<!-- 查询图完毕 -->
+
+<!-- ajax请求示例 -->
+<script>
+  function getTest() {
+    $.ajax({
+      type: "GET",
+      url: "../create",
+      success: function (res) {
+        alert(res);
+        console.log(res);
+      },
+      error: function () {
+        consle.log("error");
+      },
+    });
+  }
+</script>
+
+<body onload="selectcity()">
+  <div class="toast" id="toast">
+    <span class="load"></span>
+    <span id="toast_text">检测中...</span>
+  </div>
+
+  <textarea id="editor" style="width: 100%; height: 100px" placeholder="自然语言"></textarea>
+  <select id="model_choose">
+    <option>BertBased</option>
+    <option>ChatGPT</option>
+  </select>
+  <select id="sid" onchange="selectcity()">
+    {% for key in ner_list_key%}
+    <option>{{key}}</option>
+    {% endfor%}
+  </select>
+
+  <button onclick="draw()">Create an extraction</button>
+  <center>
+    <div id="key_display">
+      {% for key,value in ner_list.items()%}
+      <div id="{{key}}_div">
+        <table>
+          {% for i in value%}
+          <tr>
+            <td>{{i}}</td>
+          </tr>
+          {% endfor%}
+        </table>
+      </div>
+      {% endfor%}
+    </div>
+  </center>
+  <h3>schema extraction</h3>
+  <textarea id="entity_text" style="width: 100%; height: 100px" placeholder="schema extraction" disabled></textarea>
+  <h3>type and entity extraction</h3>
+  <textarea id="property_text" style="width: 100%; height: 100px" placeholder="entity extraction" disabled></textarea>
+
+  <div id="viz"></div>
+</body>
+
+{% endblock %}

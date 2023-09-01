@@ -1,0 +1,268 @@
+{% extends "base.html" %} {% block title %}ChatCorn-QA{% endblock %} {% block
+page_content %}
+
+<style type="text/css">
+  /*body {
+                     设置渐变的方向和颜色 
+                     background: linear-gradient(to right, rgb(235, 235, 25),  rgb(40, 148, 248));
+                     创建从左到右的彩虹渐变 
+                } */
+  /* Style the select element */
+  .button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    color: #fff;
+    background-color: #0077cc;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .button:hover {
+    background-color: #005fa3;
+  }
+
+  .button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.4);
+  }
+  select {
+    width: 200px;
+    height: 30px;
+    padding: 5px 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Style the options inside the select element */
+  select option {
+    font-size: 16px;
+    padding: 5px 10px;
+  }
+
+  /* Style the selected option */
+  select option:checked {
+    background-color: #007bff;
+    color: #fff;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    text-align: center;
+    border: 1px solid black;
+    padding: 8px;
+  }
+  #viz {
+    width: 900px;
+    height: 700px;
+    border: 1px solid lightgray;
+    font: 22pt arial;
+  }
+  .toast {
+    display: none;
+    position: fixed;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 36rem;
+    height: 18rem;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 1rem;
+    color: #f0f0f0;
+    font-size: 2.5rem;
+  }
+
+  .load {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    height: 4rem;
+    width: 4rem;
+    border: 0.4rem solid transparent;
+    border-top-color: white;
+    border-left-color: white;
+    border-bottom-color: white;
+    animation: circle 1s infinite linear;
+    -webkit-animation: circle 1s infinite linear; /* Safari 和 Chrome */
+    border-radius: 50%;
+  }
+
+  @-webkit-keyframes circle {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(-360deg);
+    }
+  }
+</style>
+
+<!-- 查询图 ../dist/neovis.js-->
+<!-- <script type="text/javascript" src="neovis.js"></script> -->
+<script src="neovis.js"></script>
+
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"
+></script>
+
+<script type="text/javascript">
+  // define config car
+  // instantiate nodevis object
+  // draw
+
+  var viz;
+
+  function draw() {
+    var toast = document.getElementById("toast");
+    var toast_text = document.getElementById("toast_text");
+    var origin_style_display = toast.style.display;
+    toast.style.display = "flex";
+    toast_text.innerHTML = "正在生成cypher...";
+    var cypher_text;
+    $.ajax({
+      type: "GET",
+      url: "../QA_cypher",
+      data: {
+        rawtext: $("#editor").val(),
+      },
+      success: function (res) {
+        alert("success");
+        $("#cypher_text").text(res);
+        cypher_text=res;
+        toast_text.innerHTML = "正在查询图谱...";
+        var config = {
+            containerId: "viz",
+            neo4j: {
+              serverUrl: "neo4j://localhost:7687",
+              serverUser: "neo4j",
+              serverPassword: "neo4jkyrie",
+            },
+            labels: {
+                  "*": {
+                      label: "name",
+                      value: "pagerank",
+                      group: "community",
+                  },
+              
+              Disease: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+                
+              },
+
+              Pesticide: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+              },
+              Check: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+              },
+              Classification: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+              },
+              Expert: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+              },
+              Symptom: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+              },
+              Gov_subsidies: {
+                label: "name",
+                value: "pagerank",
+                group: "community",
+              },
+            },
+
+            relationships: {
+              recommand_expert: {
+                //"caption": false,
+                thickness: "weight",
+                color: "rating",
+              },
+              recommand_pesticide: {
+                //"caption": false,
+                thickness: "weight",
+                color: "rating",
+              },
+              has_subsidies: {
+                //"caption": false,
+                thickness: "weight",
+                color: "rating",
+              },
+              disease_classification: {
+                //"caption": false,
+                thickness: "weight",
+                color: "rating",
+              },
+              has_symptom: {
+                //"caption": false,
+                thickness: "weight",
+                color: "rating",
+              },
+              need_check: {
+                //"caption": false,
+                thickness: "weight",
+                color: "rating",
+              },
+            },
+            initialCypher: res,
+          };
+        viz = new NeoVis.default(config);
+        viz.render();
+        alert("查询完毕")
+        toast.style.display = origin_style_display;
+      }
+    });
+    console.log(viz);
+  }
+</script>
+<!-- 查询图完毕 -->
+<body>
+  <div class="toast" id="toast">
+    <span class="load"></span>
+    <span id="toast_text">检测中...</span>
+  </div>
+  <center>
+    <textarea
+      id="editor"
+      style="width: 100%; height: 100px"
+      placeholder="自然语言"
+    ></textarea>
+    <textarea
+        disabled="true"
+      id="cypher_text"
+      style="width: 100%; height: 100px"
+      placeholder="cypher语句"
+    ></textarea>
+
+    <button onclick="draw()">Create an extraction</button>
+    <div id="viz"></div>
+  </center>
+</body>
+
+{% endblock %}

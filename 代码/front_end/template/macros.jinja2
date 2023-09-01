@@ -1,0 +1,7 @@
+{% macro len(obj) %}
+  {% if obj is iterable %}
+    {{ obj|length }}
+  {% else %}
+    0
+  {% endif %}
+{% endmacro %}
